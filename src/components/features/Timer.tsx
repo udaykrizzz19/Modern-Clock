@@ -1,10 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/utils";
 import { useClockContext } from "@/contexts/ClockContext";
-import { Slider } from "@/components/ui/slider";
+import { ChevronUp, ChevronDown } from "lucide-react";
 
+// ============================================================================
+// TimerSelector with the DEBOUNCING FIX
+// ============================================================================
 interface TimerSelectorProps {
   value: number;
   onChange: (value: number) => void;
@@ -13,358 +16,245 @@ interface TimerSelectorProps {
 }
 
 const TimerSelector = ({ value, onChange, label, max }: TimerSelectorProps) => {
-  const { theme } = useClockContext();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  // Ref to hold the timeout for debouncing
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const values = Array.from({ length: max + 1 }, (_, i) => i);
+  const itemHeight = 48; // h-12 in Tailwind
+
+  // This effect correctly scrolls the wheel when a preset is clicked
+  useEffect(() => {
+    const ref = scrollContainerRef.current;
+    if (ref) {
+      const targetScrollTop = value * itemHeight;
+      // Only scroll if it's not already at (or very close to) the target
+      if (Math.abs(ref.scrollTop - targetScrollTop) > 1) {
+        ref.scrollTo({ top: targetScrollTop, behavior: "smooth" });
+      }
+    }
+  }, [value, itemHeight]);
+  
+  // THE FIX: Debounced scroll handler
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    
+    // Clear any previous timeout to reset the debounce timer
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    
+    // Set a new timeout. This will only run 150ms after the LAST scroll event.
+    scrollTimeoutRef.current = setTimeout(() => {
+      const selectedIndex = Math.round(target.scrollTop / itemHeight);
+      if (value !== selectedIndex) {
+        onChange(values[selectedIndex]);
+      }
+    }, 150);
+  };
 
   return (
-    <div className="flex flex-col items-center mx-2 w-24">
-      <span className="text-sm text-gray-500 mb-2">{label}</span>
-      <div 
-        className={`relative h-40 overflow-hidden ${
-          theme === 'dark' ? 'text-white' : 'text-black'
-        }`}
-      >
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <div className={`h-12 w-full ${theme === 'dark' ? 'bg-gray-800/50' : 'bg-gray-200/50'} rounded-md`}></div>
-        </div>
-        <div 
-          className="h-40 overflow-y-auto no-scrollbar py-14 snap-y snap-mandatory"
-          style={{ scrollBehavior: "smooth" }}
-          onScroll={(e) => {
-            const target = e.currentTarget;
-            const scrollPosition = target.scrollTop;
-            const itemHeight = 40; // height of each item
-            const selectedIndex = Math.round(scrollPosition / itemHeight);
-            if (selectedIndex >= 0 && selectedIndex < values.length) {
-              onChange(values[selectedIndex]);
-            }
-          }}
-          ref={(ref) => {
-            if (ref) {
-              ref.scrollTop = value * 40;
-            }
-          }}
+    <div className="flex flex-col items-center">
+      <span className="text-xs font-medium uppercase tracking-widest text-gray-400">{label}</span>
+      <div className="relative h-40 w-24 mt-2">
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-12 rounded-lg bg-white/5 z-10 pointer-events-none" />
+        <ChevronUp className="absolute top-[38px] left-1/2 -translate-x-1/2 w-5 h-5 text-gray-500 z-10" />
+        <ChevronDown className="absolute bottom-[38px] left-1/2 -translate-x-1/2 w-5 h-5 text-gray-500 z-10" />
+        <div className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-black to-transparent z-20 pointer-events-none" />
+        <div className="absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-black to-transparent z-20 pointer-events-none" />
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="h-full overflow-y-auto no-scrollbar snap-y snap-mandatory"
         >
-          {values.map((val) => (
-            <div 
-              key={val} 
-              className="h-10 flex items-center justify-center snap-start text-2xl font-bold"
-              onClick={() => onChange(val)}
-            >
-              {String(val).padStart(2, '0')}
-            </div>
-          ))}
+          <div className="pt-[56px] pb-[56px]">
+            {values.map((val) => (
+              <div key={val} className="h-12 flex items-center justify-center snap-center">
+                <span className="text-4xl font-bold font-mono">
+                  {String(val).padStart(2, '0')}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
+
+// ============================================================================
+// The Main Timer Component (with corrected state logic)
+// ============================================================================
 export function Timer() {
   const { theme } = useClockContext();
   const [hours, setHours] = useState(0);
-  const [minutes, setMinutes] = useState(0);
+  const [minutes, setMinutes] = useState(5);
   const [seconds, setSeconds] = useState(0);
+  const [activePreset, setActivePreset] = useState<number | null>(5);
+
   const [isRunning, setIsRunning] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   const [remainingTime, setRemainingTime] = useState(0);
-  const [showTimerSelector, setShowTimerSelector] = useState(true);
-  const timerRef = useRef<number | null>(null);
+  const [initialDuration, setInitialDuration] = useState(0);
+  
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef(0);
+  const remainingOnPauseRef = useRef(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Timer presets in minutes
-  const presets = [5, 10, 30];
-
   useEffect(() => {
-    // Initialize audio element for timer completion
     audioRef.current = new Audio('/timer-sound.mp3');
     audioRef.current.loop = true;
-
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
+    Notification.requestPermission();
+    return () => { audioRef.current?.pause(); };
   }, []);
 
   useEffect(() => {
-    if (!isRunning) return;
-
-    // Start the timer
-    const startTime = Date.now();
-    const totalDuration = remainingTime;
-    
-    timerRef.current = window.setInterval(() => {
-      const elapsedTime = Date.now() - startTime;
-      const newRemainingTime = Math.max(0, totalDuration - elapsedTime);
-      
-      setRemainingTime(newRemainingTime);
-      
-      if (newRemainingTime <= 0) {
-        handleTimerComplete();
-      }
-    }, 10);
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
+    if (isRunning) {
+      startTimeRef.current = Date.now();
+      intervalRef.current = setInterval(() => {
+        const elapsedTime = Date.now() - startTimeRef.current;
+        const newRemainingTime = Math.max(0, remainingOnPauseRef.current - elapsedTime);
+        setRemainingTime(newRemainingTime);
+        if (newRemainingTime <= 0) handleTimerComplete();
+      }, 50);
+    }
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [isRunning]);
+  
+  useEffect(() => {
+    const presets = [5, 10, 30];
+    if (hours === 0 && seconds === 0 && presets.includes(minutes)) {
+      setActivePreset(minutes);
+    } else {
+      setActivePreset(null);
+    }
+  }, [hours, minutes, seconds]);
+
 
   const handleTimerComplete = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    
+    if (intervalRef.current) clearInterval(intervalRef.current);
     setIsRunning(false);
-    setShowTimerSelector(true);
-    
-    // Play sound
-    if (audioRef.current) {
-      audioRef.current.play().catch((e) => console.error("Error playing audio:", e));
-    }
-    
-    // Show notification if browser supports it
-    if ("Notification" in window) {
-      if (Notification.permission === "granted") {
-        new Notification("Timer Complete", {
-          body: "Your timer has finished!",
-          icon: "/images/favicon.jpg"
-        });
-      } else if (Notification.permission !== "denied") {
-        Notification.requestPermission().then(permission => {
-          if (permission === "granted") {
-            new Notification("Timer Complete", {
-              body: "Your timer has finished!",
-              icon: "/images/favicon.jpg"
-            });
-          }
-        });
-      }
+    audioRef.current?.play().catch(e => console.error("Audio play error:", e));
+    if (Notification.permission === "granted") {
+      new Notification("Timer Complete", { body: "Your timer has finished!" });
     }
   };
 
-  const startTimer = () => {
-    if (hours === 0 && minutes === 0 && seconds === 0) return;
-    
-    const totalMilliseconds = (hours * 3600 + minutes * 60 + seconds) * 1000;
-    setRemainingTime(totalMilliseconds);
+  const startTimer = useCallback(() => {
+    const totalMs = (hours * 3600 + minutes * 60 + seconds) * 1000;
+    if (totalMs <= 0) return;
+    setInitialDuration(totalMs);
+    setRemainingTime(totalMs);
+    remainingOnPauseRef.current = totalMs;
     setIsRunning(true);
-    setIsPaused(false);
-    setShowTimerSelector(false);
-    
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-  };
+    audioRef.current?.pause();
+    audioRef.current.currentTime = 0;
+  }, [hours, minutes, seconds]);
 
-  const pauseTimer = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    
+  const pauseTimer = useCallback(() => {
     setIsRunning(false);
-    setIsPaused(true);
-  };
+    remainingOnPauseRef.current = remainingTime;
+  }, [remainingTime]);
 
-  const resumeTimer = () => {
-    setIsRunning(true);
-    setIsPaused(false);
-  };
-
-  const cancelTimer = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    
+  const resumeTimer = useCallback(() => setIsRunning(true), []);
+  const cancelTimer = useCallback(() => {
     setIsRunning(false);
-    setIsPaused(false);
-    setShowTimerSelector(true);
-    
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-  };
+    setRemainingTime(0);
+    audioRef.current?.pause();
+  }, []);
 
-  const applyPreset = (minutes: number) => {
+  const applyPreset = (mins: number) => {
     setHours(0);
-    setMinutes(minutes);
+    setMinutes(mins);
     setSeconds(0);
+    // The useEffect will automatically set the active preset
   };
-
-  // Calculate progress percentage for the circular progress indicator
-  const initialDuration = (hours * 3600 + minutes * 60 + seconds) * 1000;
-  const progress = initialDuration > 0 ? 1 - (remainingTime / initialDuration) : 0;
+  
+  const isTimerFinished = remainingTime === 0 && !isRunning && initialDuration > 0;
+  const showTimerSelector = !isRunning && remainingTime === 0;
+  const progress = initialDuration > 0 ? (remainingTime / initialDuration) : 0;
 
   return (
-    <div className={`flex flex-col items-center justify-start h-full py-10 ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-50 text-black'}`}>
+    <div className={`flex flex-col items-center justify-center h-full pt-10 pb-20 ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-50 text-black'}`}>
+      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
+      
       <AnimatePresence mode="wait">
         {showTimerSelector ? (
           <motion.div
-            key="timer-selector"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            key="selector"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-col items-center w-full"
+            className="flex flex-col items-center justify-center w-full space-y-12"
           >
-            {/* Time Selector */}
-            <div className="flex justify-center items-center mb-10">
-              <TimerSelector
-                value={hours}
-                onChange={setHours}
-                label="Hours"
-                max={99}
-              />
-              <div className="text-3xl font-bold mx-1">:</div>
-              <TimerSelector
-                value={minutes}
-                onChange={setMinutes}
-                label="Minutes"
-                max={59}
-              />
-              <div className="text-3xl font-bold mx-1">:</div>
-              <TimerSelector
-                value={seconds}
-                onChange={setSeconds}
-                label="Seconds"
-                max={59}
-              />
+            <div className="flex justify-center items-end gap-x-2">
+              <TimerSelector value={hours} onChange={setHours} label="Hours" max={23} />
+              <div className="text-4xl font-bold pb-8">:</div>
+              <TimerSelector value={minutes} onChange={setMinutes} label="Minutes" max={59} />
+              <div className="text-4xl font-bold pb-8">:</div>
+              <TimerSelector value={seconds} onChange={setSeconds} label="Seconds" max={59} />
             </div>
 
-            {/* Presets */}
-            <div className="flex justify-center gap-4 mb-10 w-full max-w-sm">
-              {presets.map((preset) => (
-                <motion.div 
-                  key={preset}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex-1"
+            <div className="flex justify-center gap-4 w-full max-w-sm px-4">
+              {[5, 10, 30].map((preset) => (
+                <Button 
+                  key={preset} 
+                  onClick={() => applyPreset(preset)} 
+                  className={`flex-1 h-12 rounded-full font-medium transition-all duration-200 border
+                    ${activePreset === preset
+                      ? 'bg-[#394150] border-[#c0c7d8]'
+                      : 'bg-[#292f3a] border-transparent hover:bg-[#394150]'
+                    }`
+                  }
                 >
-                  <Button
-                    onClick={() => applyPreset(preset)}
-                    variant="outline"
-                    className={`w-full h-14 rounded-full ${
-                      theme === 'dark' 
-                        ? 'bg-gray-800 hover:bg-gray-700' 
-                        : 'bg-gray-200 hover:bg-gray-300'
-                    }`}
-                  >
-                    {preset} min
-                  </Button>
-                </motion.div>
+                  {preset} min
+                </Button>
               ))}
             </div>
 
-            {/* Start Button */}
-            <motion.div 
-              whileTap={{ scale: 0.95 }}
-              className="w-full max-w-xs"
-            >
-              <Button
-                onClick={startTimer}
-                disabled={hours === 0 && minutes === 0 && seconds === 0}
-                className="w-full h-14 rounded-full text-lg font-medium bg-indigo-600 hover:bg-indigo-700 text-white"
-              >
-                Start
-              </Button>
-            </motion.div>
+            <Button onClick={startTimer} disabled={hours === 0 && minutes === 0 && seconds === 0} className="w-full max-w-[200px] h-14 rounded-full text-lg font-semibold bg-indigo-600 hover:bg-indigo-700 text-white disabled:bg-gray-800 disabled:text-gray-500">
+              Start
+            </Button>
           </motion.div>
         ) : (
           <motion.div
-            key="timer-running"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            key="progress"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-col items-center"
+            className="flex flex-col items-center justify-center space-y-10"
           >
-            {/* Progress Ring */}
-            <div className="relative w-60 h-60 mb-8">
+            <div className="relative w-64 h-64">
               <svg className="w-full h-full" viewBox="0 0 100 100">
-                {/* Background Circle */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke={theme === 'dark' ? '#333' : '#e5e7eb'}
-                  strokeWidth="8"
-                />
-                
-                {/* Progress Circle */}
+                <circle cx="50" cy="50" r="45" fill="none" stroke={theme === 'dark' ? '#1f2937' : '#e5e7eb'} strokeWidth="6" />
                 <motion.circle
                   cx="50"
                   cy="50"
                   r="45"
                   fill="none"
-                  stroke="#4f46e5"
-                  strokeWidth="8"
+                  stroke={isTimerFinished ? "#4ade80" : "#4f46e5"}
+                  strokeWidth="6"
                   strokeLinecap="round"
-                  strokeDasharray="283"
-                  strokeDashoffset={283 * (1 - progress)}
+                  pathLength="1"
+                  strokeDasharray="1"
+                  strokeDashoffset={1 - progress}
                   transform="rotate(-90 50 50)"
-                  initial={{ strokeDashoffset: 283 }}
-                  animate={{ strokeDashoffset: 283 * (1 - progress) }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  transition={{ duration: 0.5 }}
                 />
-                
-                {/* Time Text */}
-                <foreignObject x="0" y="0" width="100" height="100">
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="text-3xl font-bold">
-                      {formatTime(remainingTime, false)}
-                    </div>
-                  </div>
-                </foreignObject>
               </svg>
+              <div className="absolute inset-0 flex items-center justify-center text-5xl font-mono font-bold">
+                {isTimerFinished ? "Done!" : formatTime(remainingTime, false)}
+              </div>
             </div>
 
-            {/* Control Buttons */}
             <div className="flex gap-4 w-full max-w-xs">
-              <motion.div 
-                whileTap={{ scale: 0.95 }}
-                className="flex-1"
-              >
-                <Button
-                  onClick={cancelTimer}
-                  variant="outline"
-                  className={`w-full h-14 rounded-full ${
-                    theme === 'dark' 
-                      ? 'bg-gray-800 hover:bg-gray-700' 
-                      : 'bg-gray-200 hover:bg-gray-300'
-                  }`}
-                >
-                  Cancel
-                </Button>
-              </motion.div>
-              
-              <motion.div 
-                whileTap={{ scale: 0.95 }}
-                className="flex-1"
-              >
-                {isPaused ? (
-                  <Button
-                    onClick={resumeTimer}
-                    className="w-full h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white"
-                  >
-                    Resume
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={pauseTimer}
-                    className="w-full h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white"
-                  >
-                    Pause
-                  </Button>
-                )}
-              </motion.div>
+              <Button onClick={cancelTimer} className="flex-1 h-14 rounded-full bg-gray-800 hover:bg-gray-700 text-white font-semibold">Cancel</Button>
+              {isRunning && !isTimerFinished && <Button onClick={pauseTimer} className="flex-1 h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">Pause</Button>}
+              {!isRunning && !isTimerFinished && <Button onClick={resumeTimer} className="flex-1 h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">Resume</Button>}
+              {isTimerFinished && <Button onClick={startTimer} className="flex-1 h-14 rounded-full bg-green-500 hover:bg-green-600 text-white font-semibold">Restart</Button>}
             </div>
           </motion.div>
         )}

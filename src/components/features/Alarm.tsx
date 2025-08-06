@@ -125,7 +125,7 @@ export function Alarm() {
     if (alarm) {
       setFormValues({
         time: alarm.time,
-        days: alarm.days,
+        days: alarm.days || [],
         label: alarm.label || "",
         sound: alarm.sound || "Default",
         vibrate: alarm.vibrate !== undefined ? alarm.vibrate : true,
@@ -136,17 +136,19 @@ export function Alarm() {
     }
   };
 
-  const formatDays = (days: string[]) => {
-    if (days.length === 0) return "Once";
-    if (days.length === 7) return "Every day";
-    if (days.length === 5 && days.includes("mon") && days.includes("tue") && days.includes("wed") && days.includes("thu") && days.includes("fri"))
+  const formatDays = (selectedDays: string[]) => {
+    if (selectedDays.length === 0) return "Once";
+    if (selectedDays.length === 7) return "Every day";
+    if (selectedDays.length === 5 && selectedDays.includes("mon") && selectedDays.includes("tue") && selectedDays.includes("wed") && selectedDays.includes("thu") && selectedDays.includes("fri"))
       return "Weekdays";
-    if (days.length === 2 && days.includes("sat") && days.includes("sun"))
+    if (selectedDays.length === 2 && selectedDays.includes("sat") && selectedDays.includes("sun"))
       return "Weekend";
     
-    return days.map(d => {
-      const day = days.find(day => day.value === d);
-      return day ? day.short : "";
+    // Map over the selected day strings (e.g., "mon")
+    return selectedDays.map(dayValue => {
+      // Find the corresponding object in the module-level `days` constant
+      const dayObject = days.find(d => d.value === dayValue);
+      return dayObject ? dayObject.short : "";
     }).join(", ");
   };
 
@@ -216,7 +218,7 @@ export function Alarm() {
                         {alarm.time}
                       </div>
                       <div className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {formatDays(alarm.days)}
+                        {formatDays(alarm.days || [])}
                         {alarm.label && ` • ${alarm.label}`}
                       </div>
                     </div>

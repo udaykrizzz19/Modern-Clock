@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body, #root {
+  overflow: hidden;
+  height: 100%;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -ms-overflow-style: none;
+}
+
+* {
+  scrollbar-width: none;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

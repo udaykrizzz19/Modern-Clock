@@ -8,13 +8,13 @@ export function Stopwatch() {
   const { time, isRunning, start, pause, reset, laps, addLap } = useStopwatch();
   const { theme } = useClockContext();
   
-  // Format display time with milliseconds
   const formattedTime = formatTime(time, true);
   const [hours, minutes, secondsAndMilliseconds] = formattedTime.split(':');
   const [seconds, milliseconds] = secondsAndMilliseconds.split('.');
 
   return (
-    <div className={`flex flex-col items-center justify-start h-full py-10 ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-50 text-black'}`}>
+    <div className={`flex flex-col items-center justify-center h-full py-10 ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-50 text-black'}`}>
+      
       {/* Main timer display */}
       <motion.div 
         className="text-5xl md:text-7xl font-bold mb-16 tracking-wider"
@@ -22,49 +22,17 @@ export function Stopwatch() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <motion.span 
-          key={`h-${hours}`}
-          className="inline-block"
-          initial={{ opacity: 0.5 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2 }}
-        >
-          {hours}
-        </motion.span>
+        <motion.span>{hours}</motion.span>
         <motion.span>:</motion.span>
-        <motion.span 
-          key={`m-${minutes}`}
-          className="inline-block"
-          initial={{ opacity: 0.5 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2 }}
-        >
-          {minutes}
-        </motion.span>
+        <motion.span>{minutes}</motion.span>
         <motion.span>:</motion.span>
-        <motion.span 
-          key={`s-${seconds}`}
-          className="inline-block"
-          initial={{ opacity: 0.5 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2 }}
-        >
-          {seconds}
-        </motion.span>
+        <motion.span>{seconds}</motion.span>
         <motion.span>.</motion.span>
-        <motion.span 
-          key={`ms-${milliseconds}`}
-          className="inline-block"
-          initial={{ opacity: 0.5 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.1 }}
-        >
-          {milliseconds}
-        </motion.span>
+        <motion.span className="text-gray-500">{milliseconds}</motion.span>
       </motion.div>
 
       {/* Control buttons */}
-      <div className="flex w-full max-w-sm justify-center gap-4">
+      <div className="flex w-full max-w-sm justify-center gap-4 px-4">
         <AnimatePresence mode="wait">
           {isRunning ? (
             <>
@@ -78,8 +46,9 @@ export function Stopwatch() {
               >
                 <Button 
                   onClick={addLap}
-                  variant="outline" 
-                  className={`w-full h-14 rounded-full text-lg font-medium ${
+                  variant="outline"
+                  // CHANGE: Reduced size on mobile, made responsive
+                  className={`w-full h-12 md:h-14 rounded-full text-base md:text-lg font-medium ${
                     theme === 'dark' 
                       ? 'bg-gray-800 hover:bg-gray-700 text-gray-200' 
                       : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
@@ -98,7 +67,8 @@ export function Stopwatch() {
               >
                 <Button 
                   onClick={pause}
-                  className="w-full h-14 rounded-full text-lg font-medium bg-indigo-600 hover:bg-indigo-700 text-white"
+                  // CHANGE: Reduced size on mobile, made responsive
+                  className="w-full h-12 md:h-14 rounded-full text-base md:text-lg font-medium bg-indigo-600 hover:bg-indigo-700 text-white"
                 >
                   Pause
                 </Button>
@@ -117,7 +87,8 @@ export function Stopwatch() {
                 <Button 
                   onClick={reset}
                   variant="outline" 
-                  className={`w-full h-14 rounded-full text-lg font-medium ${
+                  // CHANGE: Reduced size on mobile, made responsive
+                  className={`w-full h-12 md:h-14 rounded-full text-base md:text-lg font-medium ${
                     theme === 'dark' 
                       ? 'bg-gray-800 hover:bg-gray-700 text-gray-200' 
                       : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
@@ -136,7 +107,8 @@ export function Stopwatch() {
               >
                 <Button 
                   onClick={start}
-                  className="w-full h-14 rounded-full text-lg font-medium bg-indigo-600 hover:bg-indigo-700 text-white"
+                  // CHANGE: Reduced size on mobile, made responsive
+                  className="w-full h-12 md:h-14 rounded-full text-base md:text-lg font-medium bg-indigo-600 hover:bg-indigo-700 text-white"
                 >
                   Resume
                 </Button>
@@ -155,7 +127,8 @@ export function Stopwatch() {
                 <Button 
                   disabled
                   variant="outline" 
-                  className={`w-full h-14 rounded-full text-lg font-medium ${
+                  // CHANGE: Reduced size on mobile, made responsive
+                  className={`w-full h-12 md:h-14 rounded-full text-base md:text-lg font-medium ${
                     theme === 'dark' 
                       ? 'bg-gray-800 text-gray-600' 
                       : 'bg-gray-200 text-gray-400'
@@ -174,7 +147,8 @@ export function Stopwatch() {
               >
                 <Button 
                   onClick={start}
-                  className="w-full h-14 rounded-full text-lg font-medium bg-indigo-600 hover:bg-indigo-700 text-white"
+                  // CHANGE: Reduced size on mobile, made responsive
+                  className="w-full h-12 md:h-14 rounded-full text-base md:text-lg font-medium bg-indigo-600 hover:bg-indigo-700 text-white"
                 >
                   Start
                 </Button>
