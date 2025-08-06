@@ -19,14 +19,13 @@
 </p>
 
 <p align="center">
-  <a href="YOUR_LIVE_DEMO_URL_HERE"><strong>View Live Demo »</strong></a>
+  <a href="https://modern-clock.vercel.app/"><strong>View Live Demo »</strong></a>
 </p>
 
 ---
 
 <div align="center">
 
-<!-- IMPORTANT: Create a GIF of your app and replace this placeholder -->
 <img src="https://your-gif-url-here.com/app-demo.gif" alt="App Demo GIF" width="350"/>
 
 </div>
@@ -153,5 +152,3 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ## Acknowledgements
 
 -   Inspired by the beautiful and functional designs of the Samsung Clock and iOS Clock applications.
--   [shadcn/ui](https://ui.shadcn.com/) for the excellent component library.
--   [Framer Motion](https://www.framer.com/motion/) for the powerful animation tools.
