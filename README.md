@@ -91,7 +91,6 @@ Follow these instructions to get a local copy of the project up and running on y
     ```sh
     npm install
     ```
-
 ### Running the Application
 
 1.  **Start the development server:**
@@ -113,6 +112,29 @@ Follow these instructions to get a local copy of the project up and running on y
     ```
 
 ---
+
+```text
+shadcn-ui/
+├── README.md                  # Project documentation
+├── components.json            # Component configuration
+├── eslint.config.js           # ESLint configuration
+├── index.html                 # Main HTML file
+├── package.json               # Project dependencies and scripts
+├── postcss.config.js          # PostCSS configuration
+├── public/                    # Public assets
+│   ├── favicon.svg            # Favicon
+│   └── images/                # Image assets
+├── src/                       # Source code
+│   ├── App.css                # Global styles
+│   ├── App.tsx                # Main application component
+│   ├── components/            # Reusable UI components
+│   ├── contexts/              # Context API for global state management
+│   ├── hooks/                 # Custom React hooks
+│   ├── lib/                   # Utility functions and theme management
+│   └── pages/                 # Page components (Alarm, Stopwatch, etc.)
+├── tailwind.config.ts         # Tailwind CSS configuration
+├── tsconfig.json              # Base TypeScript configuration
+└── vite.config.ts             # Vite build configuration
 
 ## 🤝 Contributing
 
