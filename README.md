@@ -38,7 +38,7 @@ This application is divided into four main modules, each packed with useful feat
 ## 🚀 Live Demo
 
 Check out the live version of the application here:
-**[https://modern-clock.vercel.app/] (https://modern-clock.vercel.app/)**
+**[https://modern-clock.vercel.app/](https://modern-clock.vercel.app/)**
 
 ---
 
