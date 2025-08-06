@@ -1,22 +1,18 @@
 # Modern Clock App Clone
 
-<p align="center">
-  <a href="./LICENSE">
-    <img src="https://img.shields.io/badge/License-MIT-F7DF1E?style=flat&labelColor=555" alt="License">
-  </a>
-  <a href="https://github.com/udaykrizzz19/Modern-Clock/pulls">
-    <img src="https://img.shields.io/badge/PRs-welcome-4c1?style=flat&labelColor=555" alt="PRs Welcome">
-  </a>
-  <a href="https://react.dev">
-    <img src="https://img.shields.io/badge/React-18.2.0-61DAFB?style=flat&logo=react&logoColor=white&labelColor=555" alt="React">
-  </a>
-  <a href="https://www.typescriptlang.org/">
-    <img src="https://img.shields.io/badge/TypeScript-5.2.2-3178C6?style=flat&logo=typescript&logoColor=white&labelColor=555" alt="TypeScript">
-  </a>
-  <a href="https://tailwindcss.com/">
-    <img src="https://img.shields.io/badge/Tailwind_CSS-3.4.1-06B6D4?style=flat&logo=tailwindcss&logoColor=white&labelColor=555" alt="Tailwind CSS">
-  </a>
-</p>
+<div align="center">
+
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Framer Motion](https://img.shields.io/badge/Framer_Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white)
+![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-000000?style=for-the-badge&logo=shadcnui&logoColor=white)
+![pnpm](https://img.shields.io/badge/pnpm-F69220?style=for-the-badge&logo=pnpm&logoColor=white)
+![Prettier](https://img.shields.io/badge/Prettier-F7B93E?style=for-the-badge&logo=prettier&logoColor=black)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+
+</div>
 
 <p align="center">
   A feature-rich, pixel-perfect clone of a modern mobile clock application, built with React, Vite, TypeScript, and Tailwind CSS.
