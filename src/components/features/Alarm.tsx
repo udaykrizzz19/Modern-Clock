@@ -15,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, MoreVertical, Edit, Settings, Clock, Trash } from "lucide-react";
+import { Plus, MoreVertical, Edit, Settings, Clock, Trash, Sun, Moon } from "lucide-react";
 
 interface Day {
   value: string;
@@ -53,14 +53,22 @@ const alarmSounds = [
   "Classic Bell",
 ];
 
+
 export function Alarm() {
-  const { theme, alarms, addAlarm, updateAlarm, deleteAlarm } = useClockContext();
+  const { theme, alarms, addAlarm, updateAlarm, deleteAlarm, toggleTheme } = useClockContext();
   const [showAddAlarm, setShowAddAlarm] = useState(false);
   const [editingAlarmId, setEditingAlarmId] = useState<string | null>(null);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   
+  const getCurrentTime = () => {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
   const [formValues, setFormValues] = useState<AlarmFormValues>({
-    time: "07:00",
+    time: getCurrentTime(),
     days: [],
     label: "",
     sound: "Default",
@@ -71,7 +79,7 @@ export function Alarm() {
 
   const resetForm = () => {
     setFormValues({
-      time: "07:00",
+      time: getCurrentTime(),
       days: [],
       label: "",
       sound: "Default",
@@ -158,29 +166,12 @@ export function Alarm() {
       <div className="flex justify-between items-center p-4">
         <h1 className={`text-xl font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>Alarm</h1>
         <div className="flex">
-          <Popover open={showSettingsMenu} onOpenChange={setShowSettingsMenu}>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <MoreVertical className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className={`w-56 ${theme === 'dark' ? 'bg-gray-900 text-white border-gray-800' : 'bg-white text-black'}`}>
-              <div className="grid gap-1">
-                <Button variant="ghost" className="w-full justify-start rounded-md">
-                  <Clock className="mr-2 h-4 w-4" />
-                  Set Sleep mode schedule
-                </Button>
-                <Button variant="ghost" className="w-full justify-start rounded-md">
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </Button>
-                <Button variant="ghost" className="w-full justify-start rounded-md">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full">
+            {theme === 'dark' ? 
+              <Sun className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} /> :
+              <Moon className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} />
+            }
+          </Button>
         </div>
       </div>
 

@@ -159,31 +159,9 @@ export function ClockLayout({ children }: ClockLayoutProps) {
   return (
     <div 
       className={`flex flex-col h-screen overflow-hidden ${
-        theme === 'dark' ? 'bg-[#121212] text-white' : 'bg-gray-50 text-black'
+        theme === 'dark' ? 'bg-black text-white' : 'bg-gray-50 text-black'
       }`}
     >
-      {/* Status Bar */}
-      <div className={`flex justify-between items-center p-2 px-4 text-sm z-10 ${
-        theme === 'dark' ? 'bg-black/30' : 'bg-gray-50/30'
-      }`}>
-        <div>10:54</div>
-        <div className="flex items-center space-x-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={toggleTheme}
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              {theme === 'dark' ? (
-                <motion.div key="moon" initial={{ opacity: 0, rotate: -90 }} animate={{ opacity: 1, rotate: 0 }} exit={{ opacity: 0, rotate: 90 }} transition={{ duration: 0.2 }}><Moon className="h-4 w-4" /></motion.div>
-              ) : (
-                <motion.div key="sun" initial={{ opacity: 0, rotate: 90 }} animate={{ opacity: 1, rotate: 0 }} exit={{ opacity: 0, rotate: -90 }} transition={{ duration: 0.2 }}><Sun className="h-4 w-4" /></motion.div>
-              )}
-            </AnimatePresence>
-          </Button>
-        </div>
-      </div>
       
       <main className="flex-1 overflow-hidden pb-24">
         <AnimatePresence mode="wait">
