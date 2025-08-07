@@ -167,22 +167,17 @@ export const ClockProvider = ({ children }: ClockProviderProps) => {
 
     const intervalId = setInterval(checkAlarms, 1000);
     return () => clearInterval(intervalId);
-  }, [alarms, updateAlarm]); // The watcher needs to re-evaluate if the alarms list changes.
-  
-  // --- NEW FUNCTION TO STOP THE ALARM ---
-  const stopRingingAlarm = () => {
+  }, [alarms, updateAlarm]);
+
+const stopRingingAlarm = () => {
     if (audioRef.current) {
       audioRef.current.pause();
-      audioRef.current.currentTime = 0; // Rewind sound
-    }
-    setRingingAlarm(null); // Clear the ringing alarm state
+      audioRef.current.currentTime = 0;
+ }
+    setRingingAlarm(null);
   };
   
-  // ============================================================================
-  // END: ALARM WATCHER LOGIC
-  // ============================================================================
 
-  // World Clock methods (Unchanged)
   const addWorldClock = (worldClock: Omit<WorldClock, 'id'>) => {
     const newWorldClock = { ...worldClock, id: uuidv4() };
     setWorldClocks(prev => [...prev, newWorldClock]);

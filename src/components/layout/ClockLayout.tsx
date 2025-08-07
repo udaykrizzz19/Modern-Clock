@@ -189,15 +189,16 @@ export function ClockLayout({ children }: ClockLayoutProps) {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex flex-col items-center justify-between p-8 bg-black/80 backdrop-blur-md"
           >
+            {/* Top section for info */}
             <div className="text-center mt-20">
-              <motion.h1 
+              <motion.h1
                 initial={{ scale: 0.8 }}
                 animate={{ scale: 1 }}
                 className="text-7xl font-light"
               >
                 {ringingAlarm.time}
               </motion.h1>
-              <motion.p 
+              <motion.p
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
@@ -207,10 +208,12 @@ export function ClockLayout({ children }: ClockLayoutProps) {
               </motion.p>
             </div>
 
+            {/* Bottom section for the stop button */}
             <div className="mb-20">
               <motion.button
                 whileTap={{ scale: 0.9 }}
-                onClick={stopRingingAlarm}
+                // onClick with the timeout to ensure it works.
+                onClick={() => stopRingingAlarm()}
                 className="w-24 h-24 rounded-full bg-red-600 hover:bg-red-700 flex flex-col items-center justify-center text-white shadow-lg"
               >
                 <BellOff className="h-8 w-8" />

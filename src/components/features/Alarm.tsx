@@ -197,15 +197,15 @@ export function Alarm() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.2 }}
-                  className={`p-[1.8rem] rounded-[5rem] mb-3 ${
+                  className={`py-[1.4rem] pr-[2rem] pl-[2.5rem] rounded-[5rem] mb-3 ${
                     theme === 'dark' 
-                      ? 'bg-gray-900 border border-gray-800' 
-                      : 'bg-white shadow-sm'
+                      ? 'bg-[#393E46] border border-gray-800' 
+                      : 'bg-[#D8D2C2] shadow-sm'
                   }`}
                 >
                   <div className="flex justify-between items-center">
                     <div>
-                      <div className={`text-4xl font-normal ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+                      <div className={`text-xl font-normal ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
                         {alarm.time}
                       </div>
                       <div className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>

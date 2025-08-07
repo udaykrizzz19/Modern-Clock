@@ -151,7 +151,7 @@ export function WorldClock() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ duration: 0.2 }}
-                      className={`p-[1.8rem] rounded-[5rem] flex justify-between items-center group/item ${
+                      className={`py-[1.4rem] pr-[2rem] pl-[2.5rem] rounded-[5rem] flex justify-between items-center group/item ${
                         theme === 'dark' 
                           ? 'bg-gray-900 border border-gray-800' 
                           : 'bg-white shadow-sm'
