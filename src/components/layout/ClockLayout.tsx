@@ -46,10 +46,10 @@ const dockStyles = `
   .dock-panel {
     display: flex;
     align-items: flex-end;
-    gap: 20px;
-    padding: 8px;
-    height: 56px;
-    border-radius: 1.25rem;
+    gap: 25px;
+    padding: 8px 25px;
+    height: 60px;
+    border-radius: 2rem;
     background-color: hsla(0, 0%, 15%, 0.5);
     border: 1px solid hsla(0, 0%, 100%, 0.1);
     backdrop-filter: blur(16px);
@@ -91,10 +91,6 @@ const dockStyles = `
     }
   }
 `;
-
-// ============================================================================
-// 2. Dock Component Logic (Unchanged)
-// ============================================================================
 
 // Type definitions for Dock items
 export type DockItemData = {
@@ -150,9 +146,6 @@ function Dock({ items }: { items: DockItemData[] }) {
   );
 }
 
-// ============================================================================
-// 3. Main Layout Component (FIX APPLIED HERE)
-// ============================================================================
 
 interface ClockLayoutProps {
   children: ReactNode;
