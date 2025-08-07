@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, ReactNode, useRef } from 'react';
+import { createContext, useContext, useEffect, ReactNode, useRef, useState } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -14,6 +14,8 @@ export interface Alarm {
   label?: string;
   sound?: string; // Currently a placeholder, but good for future use
   vibrate?: boolean;
+  crescendoMode?: boolean;
+  challengeToDismiss?: boolean;
 }
 
 export interface WorldClock {
@@ -49,6 +51,9 @@ interface ClockContextType {
   addTimer: (timer: Omit<Timer, 'id'>) => void;
   updateTimer: (id: string, updates: Partial<Omit<Timer, 'id'>>) => void;
   deleteTimer: (id: string) => void;
+  // --- ADDED FOR RINGING ALARM ---
+  ringingAlarm: Alarm | null;
+  stopRingingAlarm: () => void;
 }
 
 // Create context
@@ -72,6 +77,9 @@ export const ClockProvider = ({ children }: ClockProviderProps) => {
   const [alarms, setAlarms] = useLocalStorage<Alarm[]>('android-clock-alarms', []);
   const [worldClocks, setWorldClocks] = useLocalStorage<WorldClock[]>('android-clock-world-clocks', []);
   const [timers, setTimers] = useLocalStorage<Timer[]>('android-clock-timers', []);
+
+  // --- NEW STATE FOR RINGING ALARM ---
+  const [ringingAlarm, setRingingAlarm] = useState<Alarm | null>(null);
 
   // Apply theme to document
   useEffect(() => {
@@ -112,6 +120,10 @@ export const ClockProvider = ({ children }: ClockProviderProps) => {
     // This line determines the ringing sound.
     // Place your sound file (e.g., 'alarm.mp3') in the /public folder.
     audioRef.current = new Audio('/timer-sound.mp3'); 
+    // --- ADDED LOOPING FOR ALARM SOUND ---
+    if (audioRef.current) {
+      audioRef.current.loop = true;
+    }
     Notification.requestPermission(); // Ask for permission to show notifications
   }, []);
 
@@ -124,12 +136,10 @@ export const ClockProvider = ({ children }: ClockProviderProps) => {
       const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       const currentDay = dayMap[now.getDay()];
 
-      // If we already rang the alarm this minute, don't do it again.
       if (lastTriggeredTimeRef.current === currentTime) {
         return;
       }
 
-      // Find the first alarm that is enabled and matches the current time and day.
       const alarmToRing = alarms.find(alarm => {
         const isOneTimeAlarm = alarm.days.length === 0;
         const isRecurringToday = alarm.days.includes(currentDay);
@@ -137,37 +147,36 @@ export const ClockProvider = ({ children }: ClockProviderProps) => {
       });
 
       if (alarmToRing) {
-        // --- An alarm needs to ring! ---
-        console.log(`Ringing alarm: ${alarmToRing.label || alarmToRing.time}`);
-        
-        // 1. Play the sound
+        // --- UPDATED TO SET RINGING STATE & PLAY SOUND ---
+        setRingingAlarm(alarmToRing);
         if (audioRef.current) {
           audioRef.current.play().catch(e => console.error("Audio playback error:", e));
         }
         
-        // 2. Show a desktop notification
         if (Notification.permission === 'granted') {
-          new Notification('Alarm!', {
-            body: alarmToRing.label || `It's ${alarmToRing.time}`,
-          });
+          new Notification('Alarm!', { body: alarmToRing.label || `It's ${alarmToRing.time}` });
         }
-
-        // 3. Prevent the alarm from ringing again in the same minute
+        
         lastTriggeredTimeRef.current = currentTime;
 
-        // 4. If it was a one-time alarm, disable it automatically.
         if (alarmToRing.days.length === 0) {
           updateAlarm(alarmToRing.id, { enabled: false });
         }
       }
     };
 
-    // We check every second to see if an alarm needs to ring.
     const intervalId = setInterval(checkAlarms, 1000);
-
-    // This is a cleanup function that stops the interval when the app closes.
     return () => clearInterval(intervalId);
   }, [alarms, updateAlarm]); // The watcher needs to re-evaluate if the alarms list changes.
+  
+  // --- NEW FUNCTION TO STOP THE ALARM ---
+  const stopRingingAlarm = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0; // Rewind sound
+    }
+    setRingingAlarm(null); // Clear the ringing alarm state
+  };
   
   // ============================================================================
   // END: ALARM WATCHER LOGIC
@@ -207,6 +216,9 @@ export const ClockProvider = ({ children }: ClockProviderProps) => {
     addTimer,
     updateTimer,
     deleteTimer,
+    // --- ADDED TO CONTEXT VALUE ---
+    ringingAlarm,
+    stopRingingAlarm,
   };
 
   return (

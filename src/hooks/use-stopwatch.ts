@@ -1,5 +1,3 @@
-// src/hooks/use-stopwatch.ts
-
 import { useState, useRef, useCallback, useEffect } from 'react';
 
 export interface Lap {
@@ -17,23 +15,6 @@ export function useStopwatch() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef(0);
   const elapsedTimeOnPauseRef = useRef(0);
-
-  // ============================================================================
-  // START: NEW SOUND LOGIC
-  // ============================================================================
-  // Create a ref to hold the audio object so we don't recreate it on every render.
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  // This effect runs only once when the hook is first used.
-  // It creates the Audio object and gets it ready.
-  useEffect(() => {
-    // The path '/sound.mp3' points to the file in your /public folder.
-    audioRef.current = new Audio('/sound.mp3');
-  }, []); // The empty array ensures this runs only once.
-  
-  // ============================================================================
-  // END: NEW SOUND LOGIC
-  // ============================================================================
 
   useEffect(() => {
     if (isRunning) {
@@ -69,12 +50,6 @@ export function useStopwatch() {
 
   const addLap = useCallback(() => {
     if (isRunning) {
-      // --- Play the sound when a lap is added ---
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0; // Rewind the sound to the beginning
-        audioRef.current.play().catch(e => console.error("Error playing sound:", e));
-      }
-      
       const lastLapTime = laps[0]?.time || 0;
       const newLap: Lap = {
         id: Date.now(),

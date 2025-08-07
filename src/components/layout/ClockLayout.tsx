@@ -1,6 +1,3 @@
-// This file now contains all the logic for the layout and the new Dock navigation.
-// The "no-scrolling" fix has been applied.
-
 import {
   AnimatePresence,
   motion,
@@ -16,7 +13,8 @@ import {
   Hourglass, 
   Moon, 
   Sun, 
-  Timer as TimerIcon 
+  Timer as TimerIcon,
+  BellOff // --- IMPORTED BellOff ICON ---
 } from "lucide-react";
 import React, {
   Children,
@@ -29,9 +27,6 @@ import React, {
 import { useClockContext } from "@/contexts/ClockContext";
 import { Button } from "../ui/button";
 
-// ============================================================================
-// 1. CSS for the Dock component (Unchanged)
-// ============================================================================
 const dockStyles = `
   .dock-outer {
     position: fixed;
@@ -136,7 +131,6 @@ function Dock({ items }: { items: DockItemData[] }) {
           {items.map((item) => (
             <DockItem key={item.id} onClick={item.onClick} mouseX={mouseX}>
               <DockIcon>{item.icon}</DockIcon>
-              {/* Added a check to prevent error if isHovered is not passed */}
               <DockLabel {...(item.label as any)}>{item.label}</DockLabel>
             </DockItem>
           ))}
@@ -152,7 +146,8 @@ interface ClockLayoutProps {
 }
 
 export function ClockLayout({ children }: ClockLayoutProps) {
-  const { theme, toggleTheme, setActiveTab, activeTab } = useClockContext();
+  // --- UPDATED TO GET RINGING ALARM STATE AND FUNCTION ---
+  const { theme, toggleTheme, setActiveTab, activeTab, ringingAlarm, stopRingingAlarm } = useClockContext();
 
   const dockItems: DockItemData[] = [
     { id: "alarm", label: "Alarm", icon: <AlarmClock size={24} />, onClick: () => setActiveTab("alarm") },
@@ -162,7 +157,6 @@ export function ClockLayout({ children }: ClockLayoutProps) {
   ];
   
   return (
-    // Added overflow-hidden here as a best practice to contain the entire layout.
     <div 
       className={`flex flex-col h-screen overflow-hidden ${
         theme === 'dark' ? 'bg-[#121212] text-white' : 'bg-gray-50 text-black'
@@ -191,11 +185,6 @@ export function ClockLayout({ children }: ClockLayoutProps) {
         </div>
       </div>
       
-      {/* 
-        --- THE KEY CHANGE IS HERE ---
-        The `overflow-auto` class has been replaced with `overflow-hidden`.
-        This prevents the main content area from ever having a scrollbar.
-      */}
       <main className="flex-1 overflow-hidden pb-24">
         <AnimatePresence mode="wait">
           <motion.div
@@ -213,6 +202,46 @@ export function ClockLayout({ children }: ClockLayoutProps) {
       
       {/* Dock Navigation */}
       <Dock items={dockItems} />
+
+      <AnimatePresence>
+        {ringingAlarm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-between p-8 bg-black/80 backdrop-blur-md"
+          >
+            <div className="text-center mt-20">
+              <motion.h1 
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                className="text-7xl font-light"
+              >
+                {ringingAlarm.time}
+              </motion.h1>
+              <motion.p 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="mt-4 text-2xl text-gray-300"
+              >
+                {ringingAlarm.label || "Alarm"}
+              </motion.p>
+            </div>
+
+            <div className="mb-20">
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={stopRingingAlarm}
+                className="w-24 h-24 rounded-full bg-red-600 hover:bg-red-700 flex flex-col items-center justify-center text-white shadow-lg"
+              >
+                <BellOff className="h-8 w-8" />
+                <span className="mt-1 text-sm font-semibold">STOP</span>
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

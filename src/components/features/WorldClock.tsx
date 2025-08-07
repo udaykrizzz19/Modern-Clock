@@ -60,7 +60,7 @@ export function WorldClock() {
         addWorldClock({
           city: city.name,
           timezone: city.timezone,
-          offsetFromLocal: `${city.offset >= 0 ? '+' : ''}${city.offset}${city.offset % 1 === 0 ? ':00' : ':30'}`
+          offsetFromLocal: `${city.offset >= 0 ? '+' : ''}${city.offset % 1 === 0 ? city.offset.toFixed(2) : city.offset.toFixed(2)}`
         });
       }
       setShowAddCity(false);
@@ -78,7 +78,15 @@ export function WorldClock() {
   
   const getOffsetString = (offset: number) => {
     const difference = offset - localOffset;
-    return difference >= 0 ? `+${difference}h` : `${difference}h`;
+    if (difference === 0) return "Local time";
+    const hours = Math.trunc(difference);
+    const minutes = Math.abs(difference % 1) * 60;
+    const sign = difference > 0 ? "+" : "";
+
+    if (minutes > 0) {
+        return `${sign}${hours}h ${minutes}m`;
+    }
+    return `${sign}${hours}h`;
   };
   
   const getCityTime = (timezone: string) => {
@@ -95,27 +103,31 @@ export function WorldClock() {
   };
 
   const getCityDate = (timezone: string) => {
-    const options: Intl.DateTimeFormatOptions = { 
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    };
-    
-    return new Intl.DateTimeFormat('en-US', {
-      ...options,
-      timeZone: timezone
-    }).format(currentTime);
+    const today = new Intl.DateTimeFormat('en-US', { timeZone: timezone, day: 'numeric' }).format(currentTime);
+    const localToday = new Intl.DateTimeFormat('en-US', { day: 'numeric' }).format(currentTime);
+    const yesterday = new Intl.DateTimeFormat('en-US', { timeZone: timezone, day: 'numeric' }).format(new Date(currentTime.getTime() - 86400000));
+    const tomorrow = new Intl.DateTimeFormat('en-US', { timeZone: timezone, day: 'numeric' }).format(new Date(currentTime.getTime() + 86400000));
+
+    if (today !== localToday) {
+        if(new Date(currentTime.toLocaleString("en-US", {timeZone: timezone})).getDate() < new Date().getDate()){
+            return "Yesterday";
+        } else {
+            return "Tomorrow";
+        }
+    }
+    return "Today";
   };
+
 
   return (
     <div className={`flex flex-col h-full ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-50 text-black'}`}>
       {/* Header */}
       <div className="flex justify-between items-center p-4">
-        <h1 className="text-xl font-semibold">World Clock</h1>
+        <h1 className={`text-xl font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>World Clock</h1>
       </div>
 
       {/* City List */}
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto p-4 space-y-3 group/list">
         <AnimatePresence>
           {worldClocks.length === 0 ? (
             <motion.div
@@ -127,51 +139,60 @@ export function WorldClock() {
               No cities added yet
             </motion.div>
           ) : (
-            <div className="space-y-3">
-              {worldClocks.map((worldClock) => (
-                <motion.div
-                  key={worldClock.id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className={`p-4 rounded-lg ${
-                    theme === 'dark' 
-                      ? 'bg-gray-800' 
-                      : 'bg-white shadow-sm'
-                  }`}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="text-lg font-medium">{worldClock.city}</div>
-                      <div className="text-sm text-gray-500">
-                        {getOffsetString(parseFloat(worldClock.offsetFromLocal))} • {getCityDate(worldClock.timezone)}
+            worldClocks.map((worldClock) => {
+                const cityDetails = allCities.find(c => c.name === worldClock.city);
+                if (!cityDetails) return null;
+
+                return (
+                    <motion.div
+                      key={worldClock.id}
+                      layout
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.2 }}
+                      className={`p-[1.8rem] rounded-[5rem] flex justify-between items-center group/item ${
+                        theme === 'dark' 
+                          ? 'bg-gray-900 border border-gray-800' 
+                          : 'bg-white shadow-sm'
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 mr-4">
+                            {/* You can add country flags here if you have a component for it */}
+                        </div>
+                        <div>
+                          <div className="flex items-baseline space-x-2">
+                            <span className={`text-lg font-medium ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>{worldClock.city}</span>
+                            <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{getCityDate(worldClock.timezone)}</span>
+                          </div>
+                          <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {getOffsetString(cityDetails.offset)}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="text-2xl font-bold mr-4">
-                        {getCityTime(worldClock.timezone)}
+                      <div className="flex items-center">
+                        <div className={`text-2xl font-light tabular-nums ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+                          {getCityTime(worldClock.timezone)}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteWorldClock(worldClock.id)}
+                          className="ml-2 rounded-full opacity-0 group-hover/list:opacity-100 group-focus-within/item:opacity-100 transition-opacity"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteWorldClock(worldClock.id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                    </motion.div>
+                )
+            })
           )}
         </AnimatePresence>
       </div>
 
       {/* Add Button */}
-      <div className="p-4 flex justify-center">
+      <div className="p-4 mb-[4rem] flex justify-center">
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowAddCity(true)}
@@ -184,7 +205,13 @@ export function WorldClock() {
       {/* Add City Dialog */}
       <Dialog 
         open={showAddCity}
-        onOpenChange={setShowAddCity}
+        onOpenChange={(open) => {
+            if (!open) {
+                setShowAddCity(false);
+                setSearchQuery("");
+                setSelectedCity(null);
+            }
+        }}
       >
         <DialogContent className={`sm:max-w-md ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
           <DialogHeader>
@@ -194,7 +221,7 @@ export function WorldClock() {
           <div className="space-y-4 py-4">
             {/* Search Input */}
             <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <Input
                 placeholder="Search for a city..."
                 value={searchQuery}
@@ -203,40 +230,27 @@ export function WorldClock() {
               />
             </div>
 
-            {/* City Selection */}
-            <Select
-              value={selectedCity || ""}
-              onValueChange={setSelectedCity}
-            >
-              <SelectTrigger className={theme === 'dark' ? 'bg-gray-800' : 'bg-white'}>
-                <SelectValue placeholder="Select a city" />
-              </SelectTrigger>
-              <SelectContent className={theme === 'dark' ? 'bg-gray-800 max-h-60' : 'bg-white max-h-60'}>
-                {filteredCities.map((city) => (
-                  <SelectItem key={city.name} value={city.name}>
-                    {city.name} ({city.countryCode})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* City Selection List */}
+            <div className="max-h-60 overflow-y-auto space-y-1 pr-2">
+                {filteredCities.length > 0 ? (
+                    filteredCities.map((city) => (
+                        <button
+                            key={city.name}
+                            onClick={() => setSelectedCity(city.name)}
+                            className={`w-full text-left p-3 rounded-md transition-colors ${
+                                selectedCity === city.name 
+                                ? 'bg-indigo-600 text-white' 
+                                : theme === 'dark' ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
+                            }`}
+                        >
+                            {city.name} ({city.countryCode})
+                        </button>
+                    ))
+                ) : (
+                    <div className="text-center text-sm text-gray-500 p-4">No cities found.</div>
+                )}
+            </div>
             
-            {selectedCity && (
-              <div className={`p-3 rounded-md ${
-                theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'
-              }`}>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-medium">{selectedCity}</div>
-                    <div className="text-sm text-gray-500">
-                      {getOffsetString(allCities.find(c => c.name === selectedCity)?.offset || 0)} from local
-                    </div>
-                  </div>
-                  <div className="text-xl font-bold">
-                    {getCityTime(allCities.find(c => c.name === selectedCity)?.timezone || "")}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           <DialogFooter>

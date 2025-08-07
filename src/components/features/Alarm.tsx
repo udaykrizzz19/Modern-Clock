@@ -206,7 +206,7 @@ export function Alarm() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.2 }}
-                  className={`p-7 rounded-[4rem] mb-3 ${
+                  className={`p-[1.8rem] rounded-[5rem] mb-3 ${
                     theme === 'dark' 
                       ? 'bg-gray-900 border border-gray-800' 
                       : 'bg-white shadow-sm'

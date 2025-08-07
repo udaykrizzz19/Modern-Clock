@@ -5,9 +5,6 @@ import { formatTime } from "@/lib/utils";
 import { useClockContext } from "@/contexts/ClockContext";
 import { ChevronUp, ChevronDown } from "lucide-react";
 
-// ============================================================================
-// TimerSelector with the DEBOUNCING FIX
-// ============================================================================
 interface TimerSelectorProps {
   value: number;
   onChange: (value: number) => void;
@@ -57,9 +54,7 @@ const TimerSelector = ({ value, onChange, label, max }: TimerSelectorProps) => {
     <div className="flex flex-col items-center">
       <span className="text-xs font-medium uppercase tracking-widest text-gray-400">{label}</span>
       <div className="relative h-40 w-24 mt-2">
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-12 rounded-lg bg-white/5 z-10 pointer-events-none" />
-        <ChevronUp className="absolute top-[38px] left-1/2 -translate-x-1/2 w-5 h-5 text-gray-500 z-10" />
-        <ChevronDown className="absolute bottom-[38px] left-1/2 -translate-x-1/2 w-5 h-5 text-gray-500 z-10" />
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-12 rounded-[4rem] bg-white/5 z-10 pointer-events-none" />
         <div className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-black to-transparent z-20 pointer-events-none" />
         <div className="absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-black to-transparent z-20 pointer-events-none" />
         <div
@@ -82,10 +77,6 @@ const TimerSelector = ({ value, onChange, label, max }: TimerSelectorProps) => {
   );
 };
 
-
-// ============================================================================
-// The Main Timer Component (with corrected state logic)
-// ============================================================================
 export function Timer() {
   const { theme } = useClockContext();
   const [hours, setHours] = useState(0);
@@ -103,7 +94,7 @@ export function Timer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    audioRef.current = new Audio('/timer-sound.mp3');
+    audioRef.current = new Audio('/sound.mp3');
     audioRef.current.loop = true;
     Notification.requestPermission();
     return () => { audioRef.current?.pause(); };
@@ -245,16 +236,16 @@ export function Timer() {
                   transition={{ duration: 0.5 }}
                 />
               </svg>
-              <div className="absolute inset-0 flex items-center justify-center text-5xl font-mono font-bold">
+              <div className="absolute inset-0 flex items-center justify-center text-4xl font-mono font-bold">
                 {isTimerFinished ? "Done!" : formatTime(remainingTime, false)}
               </div>
             </div>
 
             <div className="flex gap-4 w-full max-w-xs">
-              <Button onClick={cancelTimer} className="flex-1 h-14 rounded-full bg-gray-800 hover:bg-gray-700 text-white font-semibold">Cancel</Button>
-              {isRunning && !isTimerFinished && <Button onClick={pauseTimer} className="flex-1 h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">Pause</Button>}
-              {!isRunning && !isTimerFinished && <Button onClick={resumeTimer} className="flex-1 h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">Resume</Button>}
-              {isTimerFinished && <Button onClick={startTimer} className="flex-1 h-14 rounded-full bg-green-500 hover:bg-green-600 text-white font-semibold">Restart</Button>}
+              <Button onClick={cancelTimer} className="flex-1 h-12 rounded-full bg-gray-800 hover:bg-gray-700 text-white font-semibold">Cancel</Button>
+              {isRunning && !isTimerFinished && <Button onClick={pauseTimer} className="flex-1 h-12 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">Pause</Button>}
+              {!isRunning && !isTimerFinished && <Button onClick={resumeTimer} className="flex-1 h-12 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">Resume</Button>}
+              {isTimerFinished && <Button onClick={startTimer} className="flex-1 h-12 rounded-full bg-green-500 hover:bg-green-600 text-white font-semibold">Restart</Button>}
             </div>
           </motion.div>
         )}
