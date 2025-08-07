@@ -257,7 +257,7 @@ export function Alarm() {
       </div>
 
       {/* Add Button */}
-      <div className="p-4 mb-9 flex justify-center">
+      <div className="p-4 mb-[4rem] flex justify-center">
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowAddAlarm(true)}
