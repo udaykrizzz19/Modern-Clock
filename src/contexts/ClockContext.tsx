@@ -159,9 +159,8 @@ export const ClockProvider = ({ children }: ClockProviderProps) => {
         
         lastTriggeredTimeRef.current = currentTime;
 
-        if (alarmToRing.days.length === 0) {
-          updateAlarm(alarmToRing.id, { enabled: false });
-        }
+        // Note: We don't disable one-time alarms here anymore, 
+        // we let stopRingingAlarm handle the disabling
       }
     };
 
@@ -169,14 +168,20 @@ export const ClockProvider = ({ children }: ClockProviderProps) => {
     return () => clearInterval(intervalId);
   }, [alarms, updateAlarm]);
 
-const stopRingingAlarm = () => {
+  // FIXED: Stop ringing alarm and disable it
+  const stopRingingAlarm = () => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
- }
+    }
+    
+    // Disable the currently ringing alarm
+    if (ringingAlarm) {
+      updateAlarm(ringingAlarm.id, { enabled: false });
+    }
+    
     setRingingAlarm(null);
   };
-  
 
   const addWorldClock = (worldClock: Omit<WorldClock, 'id'>) => {
     const newWorldClock = { ...worldClock, id: uuidv4() };
