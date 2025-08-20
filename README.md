@@ -95,6 +95,7 @@ The application features a modular single-page architecture with four core modul
   </a>
 </p>
 
+
 ### Animation & UI
 <p>
   <a href="https://www.framer.com/motion/">
